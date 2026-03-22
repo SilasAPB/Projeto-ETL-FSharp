@@ -2,17 +2,27 @@ namespace Main
 
 /// <summary>Leitura de dados.</summary>
 module Extract =
+    open System.Net.Http
     open Types
     open HelperFunctions
-    
+
+    let client = new HttpClient()
+
     /// <summary>Leitura do arquivo de pedidos.</summary>
-    let getOrders () =
-        let orderPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "dados", "order.csv")
-        let ordersArray = System.IO.File.ReadAllLines(orderPath)
-        HelperFunctions.Convert.ArrayToOrders ordersArray
+    let getOrders () : Async<Order[]> =
+        async {
+            let url = "https://raw.githubusercontent.com/SilasAPB/Projeto-ETL-FSharp/main/dados/order.csv"
+            let! csvData = client.GetStringAsync(url) |> Async.AwaitTask
+            let ordersArray = csvData.Split([| System.Environment.NewLine |], System.StringSplitOptions.RemoveEmptyEntries)
+            return HelperFunctions.Convert.ArrayToOrders ordersArray
+        }
 
     /// <summary>Leitura do arquivo de itens de pedidos.</summary>
-    let getItems () =
-        let itemPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "dados", "order_item.csv")
-        let itemsArray = System.IO.File.ReadAllLines(itemPath)
-        HelperFunctions.Convert.ArrayToItems itemsArray
+    let getItems () : Async<OrderItem[]> =
+        async {
+            let url = "https://raw.githubusercontent.com/SilasAPB/Projeto-ETL-FSharp/main/dados/order_item.csv"
+            let! csvData = client.GetStringAsync(url) |> Async.AwaitTask
+            let itemsArray = csvData.Split([| System.Environment.NewLine |], System.StringSplitOptions.RemoveEmptyEntries)
+            return HelperFunctions.Convert.ArrayToItems itemsArray
+        }
+

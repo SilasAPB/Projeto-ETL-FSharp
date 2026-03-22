@@ -38,20 +38,24 @@ module Program =
     /// <returns>Um inteiro representando o código de saída do programa (0 para sucesso, 1 para falha).</returns>
     [<EntryPoint>]
     let main argv =
+        let etlWorkflow =
+            async {
+                // Extract
+                let! orders = Extract.getOrders ()
+                let! items = Extract.getItems ()
+
+                // Transform
+                let statusFilter, originFilter = parseArgs argv
+                let summaries = Transform.calculateSummaries orders items statusFilter originFilter
+
+                // Load
+                let outputPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "order_totals.csv")
+                Load.saveSummariesToCsv summaries outputPath
+
+                printfn "Report successfully generated at %s" outputPath
+            }
         try
-            // Extract
-            let orders = Extract.getOrders ()
-            let items = Extract.getItems ()
-
-            // Transform
-            let statusFilter, originFilter = parseArgs argv
-            let summaries = Transform.calculateSummaries orders items statusFilter originFilter
-
-            // Load
-            let outputPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "order_totals.csv")
-            Load.saveSummariesToCsv summaries outputPath
-
-            printfn "Report successfully generated at %s" outputPath
+            Async.RunSynchronously etlWorkflow
             0 // Return 0 for success
         with
         | ex ->
