@@ -1,0 +1,13 @@
+/home/borg/ProgFunc/projeto01/ETL/bin/Debug/net10.0/ETL.deps.json
+/home/borg/ProgFunc/projeto01/ETL/bin/Debug/net10.0/ETL.dll
+/home/borg/ProgFunc/projeto01/ETL/bin/Debug/net10.0/ETL.pdb
+/home/borg/ProgFunc/projeto01/ETL/bin/Debug/net10.0/ETL.xml
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.fsproj.AssemblyReference.cache
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.AssemblyInfoInputs.cache
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.AssemblyInfo.fs
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.fsproj.CoreCompileInputs.cache
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.dll
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/refint/ETL.dll
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.xml
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ETL.pdb
+/home/borg/ProgFunc/projeto01/ETL/obj/Debug/net10.0/ref/ETL.dll

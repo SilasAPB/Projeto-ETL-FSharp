@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="ETL">
+    <resource name="FSharpSignatureData.ETL" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedData.ETL" action="remove"></resource>
+    <resource name="FSharpSignatureDataB.ETL" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedDataB.ETL" action="remove"></resource>
+    <resource name="FSharpOptimizationData.ETL" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedData.ETL" action="remove"></resource>
+    <resource name="FSharpOptimizationDataB.ETL" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedDataB.ETL" action="remove"></resource>
+    <resource name="FSharpOptimizationInfo.ETL" action="remove"></resource>
+    <resource name="FSharpSignatureInfo.ETL" action="remove"></resource>
+  </assembly>
+</linker>
