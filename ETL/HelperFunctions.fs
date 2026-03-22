@@ -1,7 +1,12 @@
 namespace HelperFunctions
 open Types
 
+/// Contém funções para converter dados brutos em tipos de domínio.
 module Convert=
+    
+    /// <summary> Converte um array de strings (uma linha do CSV) em um registro do tipo Order. </summary>
+    /// <param name="fields">Um array de strings representando os campos de um pedido.</param>
+    /// <returns>Um registro 'Order' preenchido.</returns>
     
     let elementToOrder (fields: string[]) : Order =
         let id = int fields.[0]
@@ -21,13 +26,23 @@ module Convert=
           OrderDate = orderDate
           Status = status
           Origin = origin }
-    
+
+    /// <summary>
+    /// Converte um array de linhas de um arquivo CSV de pedidos em um array de registros 'Order'.
+    /// Ignora a primeira linha (cabeçalho).
+    /// </summary>
+    /// <param name="lines">Todas as linhas do arquivo CSV de pedidos.</param>
+    /// <returns>Um array de registros 'Order'.</returns>      
     let ArrayToOrders (lines: string[]) : Order[] =
         lines
         |> Array.tail
         |> Array.map (fun line -> line.Split(','))
         |> Array.map elementToOrder
 
+
+    /// <summary> Converte um array de strings (uma linha do CSV) em um registro do tipo OrderItem. </summary>
+    /// <param name="fields">Um array de strings representando os campos de um item de pedido.</param>
+    /// <returns>Um registro 'OrderItem' preenchido.</returns>
     let elementToItem (fields: string[]) : OrderItem =
         let orderId = int fields.[0]
         let productId = int fields.[1]
@@ -41,15 +56,29 @@ module Convert=
           Tax = tax
           }
 
+
+    /// <summary>
+    /// Converte um array de linhas de um arquivo CSV de pedidos em um array de registros 'OrderItem'.
+    /// Ignora a primeira linha (cabeçalho).
+    /// </summary>
+    /// <param name="lines">Todas as linhas do arquivo CSV de pedidos.</param>
+    /// <returns>Um array de registros 'OrderItem'.</returns>
     let ArrayToItems (lines: string[]) : OrderItem[] =
         lines
         |> Array.tail
         |> Array.map (fun line -> line.Split(','))
         |> Array.map elementToItem
 
-
+/// Contém funções para realizar transformações e cálculos nos dados.
 module Transform=
-    // Funções de transformação podem ser adicionadas aqui
+    /// <summary>
+    /// Calcula os totais de valor e impostos para cada pedido, com filtros opcionais.
+    /// </summary>
+    /// <param name="orders">Um array de todos os pedidos.</param>
+    /// <param name="items">Um array de todos os itens de pedido.</param>
+    /// <param name="statusFilter">Filtro opcional para o status do pedido.</param>
+    /// <param name="originFilter">Filtro opcional para a origem do pedido.</param>
+    /// <returns>Um array de 'OrderSummary' contendo os totais para cada pedido filtrado.</returns>
     let calculateSummaries (orders: Order[]) (items: OrderItem[]) (statusFilter: Status option) (originFilter: Origin option) : OrderSummary[] =
         let filteredOrders =
             orders

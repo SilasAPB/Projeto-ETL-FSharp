@@ -1,8 +1,11 @@
 namespace Main
-
+/// <summary>Exportação dos dados.</summary>
 module Load =
     open Types
 
+    /// <summary>Função para salvar resumos de pedidos em um arquivo CSV.</summary>
+    /// <param name="summaries">Um array de resumos de pedidos a serem salvos.</param>
+    /// <param name="filePath">O caminho do arquivo onde os resumos serão salvos.</param>
     let saveSummariesToCsv (summaries: OrderSummary[]) (filePath: string) =
         let header = "order_id,total_amount,total_taxes"
         let lines =
