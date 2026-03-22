@@ -51,8 +51,13 @@ module Program =
                 // Load
                 let outputPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "order_totals.csv")
                 Load.saveSummariesToCsv summaries outputPath
+                
+                //Saida adicional para o resumo mensal
+                let monthlySummaries = Transform.calculateMonthlySummaries orders items
+                let monthlyOutputPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "monthly_summary.csv")
+                Load.saveMonthlySummariesToCsv monthlySummaries monthlyOutputPath
 
-                printfn "Report successfully generated at %s" outputPath
+                printfn "Reports successfully generated at %s" outputPath
             }
         try
             Async.RunSynchronously etlWorkflow

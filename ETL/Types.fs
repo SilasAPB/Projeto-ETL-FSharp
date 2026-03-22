@@ -35,3 +35,11 @@ type OrderSummary = {
     TotalAmount: decimal
     TotalTaxes: decimal
 }
+
+/// <summary> Estrutura que representa o resumo mensal de vendas. </summary>
+type MonthlySummary = {
+    Year: int
+    Month: int
+    AverageRevenue: decimal
+    AverageTaxes: decimal
+}

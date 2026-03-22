@@ -110,4 +110,31 @@ module Transform=
             { OrderSummary.OrderID = order.Id
               TotalAmount = totalAmount
               TotalTaxes = totalTaxes })
+    
+    /// <summary>
+    /// Calcula os resumos mensais de vendas, agrupando por ano e mês, e calculando as médias de receita e impostos.
+    /// </summary>
+    /// <param name="orders">Um array de todos os pedidos.</param>
+    /// <param name="items">Um array de todos os itens de pedido.</param>
+    /// <returns>Um array de 'MonthlySummary' contendo as médias de receita e impostos
+    let calculateMonthlySummaries (orders: Order[]) (items: OrderItem[]) : MonthlySummary[] =
+        let orderSummaries = calculateSummaries orders items None None
+
+        orderSummaries
+        |> Array.groupBy (fun summary ->
+            let order = orders |> Array.find (fun o -> o.Id = summary.OrderID)
+            (order.OrderDate.Year, order.OrderDate.Month))
+        |> Array.map (fun ((year, month), summaries) ->
+            let averageRevenue =
+                summaries
+                |> Array.averageBy (fun s -> s.TotalAmount)
+
+            let averageTaxes =
+                summaries
+                |> Array.averageBy (fun s -> s.TotalTaxes)
+
+            { MonthlySummary.Year = year
+              Month = month
+              AverageRevenue = averageRevenue
+              AverageTaxes = averageTaxes })
 
