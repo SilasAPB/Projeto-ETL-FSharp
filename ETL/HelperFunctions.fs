@@ -105,7 +105,7 @@ module Transform=
 
             let totalTaxes =
                 itemsForOrder
-                |> Array.sumBy (fun item -> item.Price * (decimal item.Quantity) * item.Tax)
+                |> Array.sumBy (fun item -> item.Tax)
 
             { OrderSummary.OrderID = order.Id
               TotalAmount = totalAmount
