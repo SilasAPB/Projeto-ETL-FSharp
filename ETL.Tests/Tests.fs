@@ -5,6 +5,7 @@ open Xunit
 open Types 
 open HelperFunctions.Convert 
 open HelperFunctions.Transform
+
 [<Fact>]
 let ``elementToOrder TestTrue`` () =
     let input = [| "1"; "101"; "2023-01-15T00:00:00"; "Complete"; "O" |]
@@ -54,40 +55,46 @@ let ``elementToItem TestFalse`` () =
     Assert.Throws<FormatException>(System.Func<obj>(fun () -> elementToItem badInput))
 
 
+
 [<Fact>]
 let ``calculateSummaries TestTrue`` () =
+    // Arrange
     let orders = [| 
         { Id = 1; ClientID = 101; OrderDate = System.DateTime(2023, 1, 15); Status = Status.Complete; Origin = Origin.Online }
     |]
-
     let items = [| 
-        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 1; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
+        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal 10.00; Tax = decimal 0.10 }
+        { OrderID = 1; ProductID = 24; Quantity = 1; Price = decimal 20.00; Tax = decimal 0.20 }
     |]
-
-    let expected : OrderSummary[] = [| 
-        { OrderID = 1; TotalAmount = decimal(40.00); TotalTaxes = decimal(3.00) }
+    let expected = [| 
+        { OrderID = 1; TotalAmount = decimal 40.00; TotalTaxes = decimal 6.00 }
     |]
+    
+    // Act
+    // CORREÇÃO: Primeiro faz o join, depois calcula
+    let joinedData = innerJoin orders items
+    let actual = calculateSummaries joinedData (Some Status.Complete) None
 
-    let actual = calculateSummaries orders items (Some Status.Complete) None
-
+    // Assert
     Assert.Equal<OrderSummary seq>(expected, actual)
 
 [<Fact>]
 let ``calculateSummaries TestFalse`` () =
+    // Arrange
     let orders = [| 
         { Id = 1; ClientID = 101; OrderDate = System.DateTime(2023, 1, 15); Status = Status.Complete; Origin = Origin.Online }
     |]
-
     let items = [| 
-        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 1; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
+        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal 10.00; Tax = decimal 1.00 }
     |]
+    let expected = [||]
 
-    let expected : OrderSummary[] = [||]
+    // Act
+    // CORREÇÃO: Primeiro faz o join, depois calcula
+    let joinedData = innerJoin orders items
+    let actual = calculateSummaries joinedData (Some Status.Pending) None
 
-    let actual = calculateSummaries orders items (Some Status.Pending) None
-
+    // Assert
     Assert.Equal<OrderSummary seq>(expected, actual)
 
 [<Fact>]
@@ -97,42 +104,47 @@ let ``calculateMonthlySummaries TestTrue`` () =
         { Id = 2; ClientID = 102; OrderDate = System.DateTime(2023, 1, 20); Status = Status.Complete; Origin = Origin.Online }
         { Id = 3; ClientID = 103; OrderDate = System.DateTime(2023, 2, 5); Status = Status.Complete; Origin = Origin.Online }
     |]
-
+    
     let items = [| 
-        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 1; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
-        { OrderID = 2; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 2; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
-        { OrderID = 3; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 3; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
+        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal 10.0; Tax = decimal 0.10 }
+        { OrderID = 1; ProductID = 24; Quantity = 1; Price = decimal 20.0; Tax = decimal 0.20 }
+        { OrderID = 2; ProductID = 23; Quantity = 2; Price = decimal 10.0; Tax = decimal 0.10 }
+        { OrderID = 2; ProductID = 24; Quantity = 1; Price = decimal 20.0; Tax = decimal 0.20 }
+        { OrderID = 3; ProductID = 23; Quantity = 2; Price = decimal 10.0; Tax = decimal 0.10 }
+        { OrderID = 3; ProductID = 24; Quantity = 1; Price = decimal 20.0; Tax = decimal 0.20 }
     |]
 
-    let expected : MonthlySummary[] = [| 
-        { Year = 2023; Month = 1; AverageRevenue = decimal(40.00); AverageTaxes = decimal(3.00) }
-        { Year = 2023; Month = 2; AverageRevenue = decimal(40.00); AverageTaxes = decimal(3.00) }
+    // CORREÇÃO: Criamos o array primeiro
+    let expectedUnsorted = [| 
+        { Year = 2023; Month = 1; AverageRevenue = decimal 40.00; AverageTaxes = decimal 6.00 }
+        { Year = 2023; Month = 2; AverageRevenue = decimal 40.00; AverageTaxes = decimal 6.00 }
     |]
+    // E depois ordenamos em uma variável separada
+    let expected = expectedUnsorted |> Array.sortBy (fun s -> s.Month)
 
-    let actual = calculateMonthlySummaries orders items
+    // Act
+    let joinedData = innerJoin orders items
+    let actualUnsorted = calculateMonthlySummaries joinedData
+    let actual = actualUnsorted |> Array.sortBy (fun s -> s.Month)
 
+    // Assert
     Assert.Equal<MonthlySummary seq>(expected, actual)
 
 [<Fact>]
 let ``calculateMonthlySummaries TestFalse`` () =
+    // Arrange
     let orders = [||]
-
     let items = [| 
-        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 1; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
-        { OrderID = 2; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 2; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
-        { OrderID = 3; ProductID = 23; Quantity = 2; Price = decimal(10.00); Tax = decimal(1.00) }
-        { OrderID = 3; ProductID = 24; Quantity = 1; Price = decimal(20.00); Tax = decimal(2.00) }
+        { OrderID = 1; ProductID = 23; Quantity = 2; Price = decimal 10.00; Tax = decimal 1.00 }
     |]
+    let expected = [||]
 
-    let expected : MonthlySummary[] = [||]
+    // Act
+    // CORREÇÃO: Primeiro faz o join, depois calcula
+    let joinedData = innerJoin orders items
+    let actual = calculateMonthlySummaries joinedData
 
-    let actual = calculateMonthlySummaries orders items
-
+    // Assert
     Assert.Equal<MonthlySummary seq>(expected, actual)
 
 [<Fact>]
