@@ -15,6 +15,9 @@ module Load =
         let content = System.String.Join(System.Environment.NewLine, Array.concat [| [|header|]; lines |])
         System.IO.File.WriteAllText(filePath, content)
 
+    /// <summary>Função para salvar resumos mensais de vendas em um arquivo CSV.</summary>
+    /// <param name="summaries">Um array de resumos mensais de vendas a serem salvos.</param>
+    /// <param name="filePath">O caminho do arquivo onde os resumos mensais serão salvos.</param>
     let saveMonthlySummariesToCsv (summaries: MonthlySummary[]) (filePath: string) =
         let header = "year,month,average_revenue,average_taxes"
         let lines =
