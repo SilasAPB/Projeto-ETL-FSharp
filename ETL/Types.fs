@@ -43,3 +43,18 @@ type MonthlySummary = {
     AverageRevenue: decimal
     AverageTaxes: decimal
 }
+
+/// <summary> Representa uma linha de dados combinada de Order e OrderItem. </summary>
+type JoinedOrderItem = {
+    // Campos do Pedido
+    OrderID: int
+    ClientID: int
+    OrderDate: System.DateTime
+    Status: Status
+    Origin: Origin
+    // Campos do Item
+    ProductID: int
+    Quantity: int
+    Price: decimal
+    Tax: decimal
+}

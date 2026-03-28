@@ -71,6 +71,36 @@ module Convert=
 
 /// Contém funções para realizar transformações e cálculos nos dados.
 module Transform=
+
+
+    /// <summary>
+    /// Combina os arrays de pedidos e itens em uma única lista "achatada", similar a um INNER JOIN de SQL.
+    /// </summary>
+    /// <param name="orders">Um array de todos os pedidos.</param>
+    /// <param name="items">Um array de todos os itens de pedido.</param>
+    /// <returns>Um array de 'JoinedOrderItem' contendo os dados combinados.</returns>
+    let innerJoin (orders: Order[]) (items: OrderItem[]) : JoinedOrderItem[] =
+        // Cria um mapa para busca rápida de pedidos por ID
+        let orderMap = orders |> Array.map (fun o -> (o.Id, o)) |> Map.ofArray
+        
+        items
+        |> Array.choose (fun item -> // 'choose' é como 'map' mas para 'Option', descartando os 'None'
+            match Map.tryFind item.OrderID orderMap with
+            | Some order ->
+                Some {
+                    OrderID = order.Id
+                    ClientID = order.ClientID
+                    OrderDate = order.OrderDate
+                    Status = order.Status
+                    Origin = order.Origin
+                    ProductID = item.ProductID
+                    Quantity = item.Quantity
+                    Price = item.Price
+                    Tax = item.Tax
+                }
+            | None -> None) // Descarta itens que não têm um pedido correspondente
+
+
     /// <summary>
     /// Calcula os totais de valor e impostos para cada pedido, com filtros opcionais.
     /// </summary>
@@ -79,35 +109,29 @@ module Transform=
     /// <param name="statusFilter">Filtro opcional para o status do pedido.</param>
     /// <param name="originFilter">Filtro opcional para a origem do pedido.</param>
     /// <returns>Um array de 'OrderSummary' contendo os totais para cada pedido filtrado.</returns>
-    let calculateSummaries (orders: Order[]) (items: OrderItem[]) (statusFilter: Status option) (originFilter: Origin option) : OrderSummary[] =
-        let filteredOrders =
-            orders
-            |> Array.filter (fun order ->
-                let statusMatch =
-                    match statusFilter with
-                    | Some s -> order.Status = s
-                    | None -> true
-                let originMatch =
-                    match originFilter with
-                    | Some o -> order.Origin = o
-                    | None -> true
-                statusMatch && originMatch)
-
-        filteredOrders
-        |> Array.map (fun order ->
-            let itemsForOrder =
-                items
-                |> Array.filter (fun item -> item.OrderID = order.Id)
-
+    let calculateSummaries (joinedData: JoinedOrderItem[]) (statusFilter: Status option) (originFilter: Origin option) : OrderSummary[] =
+        joinedData
+        |> Array.filter (fun row ->
+            let statusMatch =
+                match statusFilter with
+                | Some s -> row.Status = s
+                | None -> true 
+            let originMatch =
+                match originFilter with
+                | Some o -> row.Origin = o
+                | None -> true
+            statusMatch && originMatch)
+        |> Array.groupBy (fun row -> row.OrderID) // Agrupa todos os itens pelo ID do pedido
+        |> Array.map (fun (orderId, items) ->
             let totalAmount =
-                itemsForOrder
+                items
                 |> Array.sumBy (fun item -> item.Price * (decimal item.Quantity))
 
             let totalTaxes =
-                itemsForOrder
-                |> Array.sumBy (fun item -> item.Tax)
+                items
+                |> Array.sumBy (fun item -> item.Price * (decimal item.Quantity) * item.Tax)
 
-            { OrderSummary.OrderID = order.Id
+            { OrderSummary.OrderID = orderId
               TotalAmount = totalAmount
               TotalTaxes = totalTaxes })
     
@@ -117,21 +141,27 @@ module Transform=
     /// <param name="orders">Um array de todos os pedidos.</param>
     /// <param name="items">Um array de todos os itens de pedido.</param>
     /// <returns>Um array de 'MonthlySummary' contendo as médias de receita e impostos
-    let calculateMonthlySummaries (orders: Order[]) (items: OrderItem[]) : MonthlySummary[] =
-        let orderSummaries = calculateSummaries orders items None None
+    let calculateMonthlySummaries (joinedData: JoinedOrderItem[]) : MonthlySummary[] =
+        let orderSummaries = calculateSummaries joinedData None None
+        // Precisamos dos dados originais dos pedidos para obter a data
+        // Esta é uma limitação do design atual, mas podemos contorná-la.
+        // Uma abordagem mais avançada seria passar um mapa de datas.
+        // Por simplicidade, vamos agrupar os dados juntados diretamente.
+        joinedData
+        |> Array.groupBy (fun row -> (row.OrderDate.Year, row.OrderDate.Month))
+        |> Array.map (fun ((year, month), monthData) ->
+            // Agrupa por pedido dentro do mês para calcular a receita de cada pedido
+            let monthlyOrderRevenues =
+                monthData
+                |> Array.groupBy (fun row -> row.OrderID)
+                |> Array.map (fun (_, orderItems) ->
+                    let revenue = orderItems |> Array.sumBy (fun i -> i.Price * (decimal i.Quantity))
+                    let taxes = orderItems |> Array.sumBy (fun i -> i.Price * (decimal i.Quantity) * i.Tax)
+                    (revenue, taxes)
+                )
 
-        orderSummaries
-        |> Array.groupBy (fun summary ->
-            let order = orders |> Array.find (fun o -> o.Id = summary.OrderID)
-            (order.OrderDate.Year, order.OrderDate.Month))
-        |> Array.map (fun ((year, month), summaries) ->
-            let averageRevenue =
-                summaries
-                |> Array.averageBy (fun s -> s.TotalAmount)
-
-            let averageTaxes =
-                summaries
-                |> Array.averageBy (fun s -> s.TotalTaxes)
+            let averageRevenue = monthlyOrderRevenues |> Array.averageBy fst
+            let averageTaxes = monthlyOrderRevenues |> Array.averageBy snd
 
             { MonthlySummary.Year = year
               Month = month

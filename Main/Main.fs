@@ -44,20 +44,22 @@ module Program =
                 let! orders = Extract.getOrders ()
                 let! items = Extract.getItems ()
 
+                // Join (Nova Etapa)
+                let joinedData = Transform.innerJoin orders items
+
                 // Transform
-                let statusFilter, originFilter = parseArgs argv
-                let summaries = Transform.calculateSummaries orders items statusFilter originFilter
+                let statusFilter, originFilter = parseArgs argv 
+                let summaries = Transform.calculateSummaries joinedData statusFilter originFilter
+                let monthlySummaries = Transform.calculateMonthlySummaries joinedData
 
                 // Load
-                let outputPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "order_totals.csv")
-                Load.saveSummariesToCsv summaries outputPath
-                
-                //Saida adicional para o resumo mensal
-                let monthlySummaries = Transform.calculateMonthlySummaries orders items
-                let monthlyOutputPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "monthly_summary.csv")
-                Load.saveMonthlySummariesToCsv monthlySummaries monthlyOutputPath
+                let summaryPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "order_totals.csv")
+                Load.saveSummariesToCsv summaries summaryPath
+                printfn "Order summaries successfully generated at %s" summaryPath
 
-                printfn "Reports successfully generated at %s" outputPath
+                let monthlySummaryPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "..", "saida", "monthly_summary.csv")
+                Load.saveMonthlySummariesToCsv monthlySummaries monthlySummaryPath
+                printfn "Monthly summaries successfully generated at %s" monthlySummaryPath
             }
         try
             Async.RunSynchronously etlWorkflow
